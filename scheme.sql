@@ -1,0 +1,34 @@
+CREATE TABLE IF NOT EXISTS session (
+    id TEXT PRIMARY KEY NOT NULL,
+    playlist_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (playlist_id) REFERENCES playlist(id)
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+CREATE TABLE IF NOT EXISTS playlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    name TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+CREATE TABLE IF NOT EXISTS song (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created INTEGER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    title TEXT NOT NULL,
+    song_type TEXT NOT NULL,
+    plays INTEGER NOT NULL DEFAULT 0,
+    platform_id TEXT NOT NULL,
+    added_by TEXT NOT NULL,
+    artist TEXT,
+    cover TEXT,
+    length INTEGER,
+    playlist_id INTEGER NOT NULL,
+
+    FOREIGN KEY (playlist_id) REFERENCES playlist(id)
+);
