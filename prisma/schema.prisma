@@ -26,7 +26,7 @@ model Session {
 }
 
 model User {
-  id        Int        @id
+  id        Int        @id @default(autoincrement())
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   username  String
@@ -37,7 +37,7 @@ model User {
 }
 
 model Playlist {
-  id        Int       @id
+  id        Int       @id @default(autoincrement())
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   name      String
@@ -48,12 +48,12 @@ model Playlist {
 }
 
 model Song {
-  id        Int      @id
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   title      String
-  playCount  Int
+  playCount  Int      @default(0)
   addedBy    User     @relation(fields: [userId], references: [id])
   userId     Int
   playlist   Playlist @relation(fields: [playlistId], references: [id])
@@ -61,8 +61,8 @@ model Song {
   songType   SongType
   platformId String
 
-  artist     String?
-  album      String?
-  length     Int?
-  cover      String?
+  artist String?
+  album  String?
+  length Int?
+  cover  String?
 }

@@ -20,7 +20,13 @@ migrate:
 	npx prisma migrate dev
 
 generate:
-	npx prisma generate
+	npx prisma generate && npx prisma db seed
 
 format-prisma:
 	npx prisma format
+
+seed:
+	npx prisma db seed
+
+studio:
+	npx prisma studio

@@ -15,6 +15,9 @@
   "bugs": {
     "url": "https://github.com/KokopelliMusic/Tawa/issues"
   },
+  "prisma": {
+    "seed": "ts-node prisma/development.ts"
+  },
   "homepage": "https://github.com/KokopelliMusic/Tawa#readme",
   "dependencies": {
     "@graphql-tools/schema": "^8.3.1",
