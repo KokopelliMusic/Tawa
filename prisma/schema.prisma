@@ -6,11 +6,63 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
-model Test {
-  id   Int    @id
-  name String
+enum SongType {
+  SPOTIFY
+  YOUTUBE
+}
+
+model Session {
+  id         String   @id
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  playlistId Int
+}
+
+model User {
+  id        Int        @id
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  username  String
+  auth0Id   String
+  Session   Session[]
+  Playlist  Playlist[]
+  Song      Song[]
+}
+
+model Playlist {
+  id        Int       @id
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  name      String
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  songs     Song[]
+  Session   Session[]
+}
+
+model Song {
+  id        Int      @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title      String
+  playCount  Int
+  addedBy    User     @relation(fields: [userId], references: [id])
+  userId     Int
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  playlistId Int
+  songType   SongType
+  platformId String
+
+  artist     String?
+  album      String?
+  length     Int?
+  cover      String?
 }
