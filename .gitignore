@@ -2,6 +2,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/linux,windows,archlinuxpackages,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=linux,windows,archlinuxpackages,node
 
+#
+*.db
+*.db-journal
+
 ### Linux ###
 *~
 
