@@ -1,6 +1,9 @@
 dev:
 	npx ts-node-dev --pretty --transpile-only src/index.ts
 
+postgres-dev:
+	docker-compose up
+
 build:
 	tsc --outDir dist
 
