@@ -1,7 +1,36 @@
 import { gql } from "apollo-server-core";
+import { Playlist, PrismaClient, Session, Song } from ".prisma/client";
+import { GraphQLScalarType, Kind } from "graphql";
+
+const prisma = new PrismaClient();
+
+// Define the Date Type
+const dateScalar = new GraphQLScalarType({
+    name: 'Date',
+    description: 'Date custom scalar type',
+    serialize(value) {
+        return value.getTime(); // Convert outgoing Date to integer for JSON
+    },
+    parseValue(value) {
+        return new Date(value); // Convert incoming integer to Date
+    },
+    parseLiteral(ast) {
+        if (ast.kind === Kind.INT) {
+            return new Date(parseInt(ast.value, 10)); // Convert hard-coded AST string to integer and then to Date
+        }
+        return null; // Invalid hard-coded value (not an integer)
+    },
+});
+
 
 export const typeDefs = gql`
+    scalar Date
+
     type Query {
+        song(id: Int!): Song
+        playlist(id: Int!): Playlist
+        sessionById(id: String!): Session
+        sessionByUser(user: String!): Session
     }
 
     enum SongType {
@@ -56,7 +85,27 @@ export const typeDefs = gql`
 `
 
 export const resolvers = {
+    Date: dateScalar,
     Query: {
-        // test: () => [{ id: 1, name: 'test' }]
+        playlist: async (_: any, { id }: Playlist) => {
+            return await prisma.playlist.findFirst({
+                where: { id }
+            })
+        },
+        song: async (_: any, { id }: Song) => {
+            return await prisma.song.findFirst({
+                where: { id }
+            })
+        },
+        sessionById: async (_: any, { id }: Session) => {
+            return await prisma.session.findFirst({
+                where: { id }
+            });
+        },
+        sessionByUser: async(_: any, { userId }: Session) => {
+            return await prisma.session.findFirst({
+                where: { userId }
+            });
+        },
     }
 }
