@@ -13,6 +13,9 @@ start:
 lint:
 	tslint -c tslint.json src/**/*.ts
 	
+deploy-db:
+	npx prisma migrate deploy --skip-seed
+
 migrate:
 	npx prisma migrate dev
 
