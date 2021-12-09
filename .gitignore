@@ -5,6 +5,8 @@
 #
 *.db
 *.db-journal
+postgres
+database
 
 ### Linux ###
 *~

@@ -22,6 +22,9 @@ migrate:
 generate:
 	npx prisma generate && npx prisma db seed
 
+lint:
+	npx eslint . --ext .ts --fix 
+
 format-prisma:
 	npx prisma format
 
