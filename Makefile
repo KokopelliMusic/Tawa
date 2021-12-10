@@ -1,7 +1,7 @@
 dev:
 	npx ts-node-dev --pretty --transpile-only src/index.ts
 
-postgres-dev:
+db:
 	docker-compose up
 
 build:
@@ -10,9 +10,6 @@ build:
 start:
 	ts-node src/index.ts
 
-lint:
-	tslint -c tslint.json src/**/*.ts
-	
 deploy-db:
 	npx prisma migrate deploy --skip-seed
 
