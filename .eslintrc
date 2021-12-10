@@ -11,14 +11,21 @@
   ],
   "rules": {
     "indent": [
-        "error",
-        2
+      "error",
+      2
     ],
     "global-require": [
-        "error"
+      "error"
     ],
     "handle-callback-err": [
-        "error"
+      "error"
+    ],
+    "no-extra-semi": [
+      "error"
+    ],
+    "semi": [
+      "error",
+      "never"
     ]
   }
 }
