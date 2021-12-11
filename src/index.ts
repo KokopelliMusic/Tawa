@@ -105,4 +105,9 @@ const startServer = async () => {
 
 }
 
+process.on('SIGTERM', () => {
+  console.log('Shutting down')
+  prisma.$disconnect()
+})
+
 startServer()
