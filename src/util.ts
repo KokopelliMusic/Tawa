@@ -1,5 +1,5 @@
 
 // Returns a random integer between x (inclusive) and y (inclusive)
 export const randomIntBetweenXandY = (x: number, y: number): number => {
-  throw new Error('TODO - util.randomIntBetweenXandY')  
+  return Math.floor(Math.random() * (y - x + 1) + x)
 }
