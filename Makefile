@@ -1,5 +1,8 @@
-dev:
+dev: install generate
 	npx ts-node-dev --pretty --transpile-only src/index.ts
+
+install:
+	npm install
 
 db:
 	docker-compose up
@@ -17,7 +20,7 @@ migrate:
 	npx prisma migrate dev
 
 generate:
-	npx prisma generate && npx prisma db seed
+	npx prisma generate
 
 lint:
 	npx eslint . --ext .ts --fix 

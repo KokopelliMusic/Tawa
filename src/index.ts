@@ -61,6 +61,9 @@ const apolloServer = new ApolloServer({
   },
 })
 
+// Swagger
+
+
 /**
  * Middlewares
  */
@@ -111,3 +114,8 @@ process.on('SIGTERM', () => {
 })
 
 startServer()
+  .catch(e => {
+    throw e
+  }).finally(async () => {
+    await prisma.$disconnect()
+  })
