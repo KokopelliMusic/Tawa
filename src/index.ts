@@ -18,7 +18,7 @@ dotenv.config()
 
 // Create Express server
 const PORT = parseInt(process.env.PORT as string) || 8080
-const app = express()
+export const app = express()
 const httpServer = createServer(app)
 
 //Prisma
@@ -93,7 +93,7 @@ app.use(process.env.DEFAULT_URL + 'session', sessionRouter)
 /**
  * Run the server
  */
-const startServer = async () => {
+export const startServer = async () => {
 
   await apolloServer.start()
   apolloServer.applyMiddleware({ app })
@@ -108,14 +108,9 @@ const startServer = async () => {
 
 }
 
-process.on('SIGTERM', () => {
-  console.log('Shutting down')
-  prisma.$disconnect()
-})
-
-startServer()
-  .catch(e => {
-    throw e
-  }).finally(async () => {
-    await prisma.$disconnect()
+[`SIGINT`, `SIGUSR1`, `SIGUSR2`, `uncaughtException`, `SIGTERM`].forEach((eventType) => {
+  process.on(eventType, () => {
+    console.log('Shutting down because of ' + eventType)
+    prisma.$disconnect()
   })
+})
