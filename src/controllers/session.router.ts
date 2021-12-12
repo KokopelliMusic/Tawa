@@ -10,7 +10,7 @@ const POSSIBLE_LETTERS = 'ABCDEFGHKLNOPQRSTUVXYZ'
 const sessions = new Map<string, any>()
 
 // Generates a random unique session ID
-const generateNewSessionID = async (db: PrismaClient): Promise<string> => {
+export const generateNewSessionID = async (db: PrismaClient): Promise<string> => {
   let id = ''
   for (let letter = 0; letter < 4; letter++) {
     id += POSSIBLE_LETTERS[randomIntBetweenXandY(0, POSSIBLE_LETTERS.length - 1)]
@@ -113,6 +113,13 @@ router.post('/claim', async (req, res) => {
       })
     }
 
+    if (!sessions.has(req.body.id)) {
+      return res.status(400).json({
+        status: 400,
+        error: 'Session does not exist'
+      })
+    }
+
     if (await sessionExists(req.body.id, req.db)) {
       return res.status(400).json({
         status: 400,
@@ -121,6 +128,10 @@ router.post('/claim', async (req, res) => {
     }
 
     storeSession(req.body.id, req.body.userId, req.body.playlistId, req.db)
+      .then(() => {
+        // TODO
+        // Ping the webplayer that this session is beginning
+      })
       .catch(e => {
         return res.status(500).json({
           status: 500,
