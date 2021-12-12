@@ -1,8 +1,13 @@
 dev: install generate
-	npx ts-node-dev --pretty --transpile-only src/index.ts
+	npx ts-node-dev --pretty --transpile-only src/server.ts
 
 install:
 	npm install
+
+test: unittest
+
+unittest:
+	npx jest
 
 db:
 	docker-compose up
