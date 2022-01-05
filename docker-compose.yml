@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    container_name: tawa-web
+    profiles: ["web"]
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    volumes:
+      - "./docker/redis:/data"
+    container_name: tawa-redis
+
