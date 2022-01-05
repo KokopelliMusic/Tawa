@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Tawa example</title>
+        <script>
+            window.onload = () => {
+                let session = 'TEST'
+                document.getElementById('scode').innerText = session
+                // document.querySelector('#scode').innerText = session
+            }
+
+            function init() {
+                const stream = new EventSource('/stream/session/' + session)
+                stream.addEventListener('message', event => {
+                    console.log(event.data)
+                    const li = document.createElement('li')
+                    li.appendChild(document.createTextNode(event.data))
+                    document.querySelector('.event-data').appendChild(li)
+                })
+            }
+
+            function setSession() {
+                let temp = document.querySelector('#session').value
+                if (!temp) {
+                    return
+                }
+                session = temp
+                document.getElementById('scode').innerText = session
+                init()
+            }
+
+
+            function send() {
+                let event = document.querySelector('#event').value
+                fetch('/input/TEST', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        session: 'TEST', 
+                        data: event,
+                        clientType: 'tawa_example' 
+                    })
+                })
+                    .then(res => res.json())
+                    .then(res => console.log(res))
+                    .catch(err => console.log(err))
+            }
+        </script>
+    </head>
+
+    <body>
+        <div style="display: flex; flex-direction: column; width: 100vw; height: 100vh;">
+            <div style="height: 100%;">
+                <form>
+                    <div>
+                        <label for="input">Session code</label>
+                        <input type="text" id="session" value="TEST" />
+                        <button type="button" onclick="setSession()">Set Session</button>
+                        <span id="scode">a</span>
+                    </div>
+                    <div>
+                        <label for="event">Event</label>
+                        <input type="text" id="event" value="event_data_test" />
+                        <button type="button" onclick="send()">Send</button>
+                    </div>
+                </form>
+            </div>
+            <div style="height: 100%;">
+                <ul class="event-data"></ul>
+            </div>
+        </div>
+
+    </body>
+</html>
