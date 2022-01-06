@@ -1,10 +1,10 @@
 import { RedisClientType } from "@node-redis/client";
-import { EventEmitter } from "stream";
+import { TawaEmitter } from "../emitter";
 
 declare global {
   namespace Express {
     interface Request {
-      events: EventEmitter
+      events: TawaEmitter
       redis: RedisClientType<?>
     }
   }
