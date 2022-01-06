@@ -6,3 +6,6 @@ redis:
 
 redis-cli: 
 	docker exec -it tawa-redis redis-cli
+
+db:
+	supabase start

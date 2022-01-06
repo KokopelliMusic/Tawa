@@ -2,7 +2,8 @@ import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { createClient } from 'redis';
+import * as redislib from 'redis';
+import * as supabaselib from '@supabase/supabase-js'
 import { inputRouter } from "./input";
 import { streamRouter } from "./stream";
 import { EventEmitter } from "stream";
@@ -14,13 +15,16 @@ import { pushToList } from "./redis";
  */
 dotenv.config()
 
-if (!process.env.PORT || !process.env.REDIS_STRING) {
-  console.log('Please set PORT and REDIS_STRING in .env')
+if (!process.env.PORT || !process.env.REDIS_STRING || !process.env.SUPABASE_URL || !process.env.SUPABASE_TOKEN || !process.env.DEV) {
+  console.log('Please set PORT, REDIS_STRING, SUPABASE_URL, DEV and SUPABASE_TOKEN in .env')
   process.exit(1);
 }
  
+const DEV: boolean = process.env.DEV === 'true'
 const PORT: number = parseInt(process.env.PORT as string, 10);
 const REDIS_STRING: string = process.env.REDIS_STRING!
+const SUPABASE_URL: string = process.env.SUPABASE_URL!
+const SUPABASE_TOKEN: string = process.env.SUPABASE_TOKEN!
 
 /**
  * (Global) variables
@@ -28,7 +32,8 @@ const REDIS_STRING: string = process.env.REDIS_STRING!
 
 const app = express();
 const events = new TawaEmitter()
-const redis = createClient({ url: REDIS_STRING });
+const redis = redislib.createClient({ url: REDIS_STRING });
+const supabase = supabaselib.createClient(SUPABASE_URL, SUPABASE_TOKEN)
 
 /**
  * Middleware
@@ -56,6 +61,11 @@ redis.on('error', (err) => {
 events.on('*', (data: GlobalEmit) => {
   pushToList(redis, data.session, JSON.stringify(data))
   console.log('GLOBAL DATA: ', data)
+})
+
+supabase.from('session').on('INSERT', async (session: any) => {
+  console.log('Session created: ', session)
+  await pushToList(redis, session.id, JSON.stringify({ session: session.id, data: { type: 'session', data: session } }))
 })
 
 /**
