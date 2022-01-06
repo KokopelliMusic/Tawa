@@ -6,6 +6,8 @@ import { createClient } from 'redis';
 import { inputRouter } from "./input";
 import { streamRouter } from "./stream";
 import { EventEmitter } from "stream";
+import { GlobalEmit, TawaEmitter } from "./emitter";
+import { pushToList } from "./redis";
 
 /**
  * Config
@@ -25,7 +27,7 @@ const REDIS_STRING: string = process.env.REDIS_STRING!
  */
 
 const app = express();
-const events = new EventEmitter()
+const events = new TawaEmitter()
 const redis = createClient({ url: REDIS_STRING });
 
 /**
@@ -38,7 +40,7 @@ app.use(helmet({
 app.use(cors());
 app.use(express.json());
 
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   req.events = events
   req.redis  = redis
   next()
@@ -49,6 +51,11 @@ app.use((req, res, next) => {
  */
 redis.on('error', (err) => {
   console.error(`Redis Error: ${err}`);
+})
+
+events.on('*', (data: GlobalEmit) => {
+  pushToList(redis, data.session, JSON.stringify(data))
+  console.log('GLOBAL DATA: ', data)
 })
 
 /**
