@@ -65,7 +65,7 @@ CREATE TABLE public.spotify (
     refresh_token character varying NOT NULL,
     expires_at timestamp with time zone NOT NULL,
 
-    PRIMARY KEY(id),
+    PRIMARY KEY(id)
 );
 
 
@@ -83,6 +83,7 @@ COMMENT ON TABLE public.spotify IS 'Table that holds information about spotify s
 -- 
 
 ALTER TABLE public.song ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.new_session ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.playlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.session ENABLE ROW LEVEL SECURITY;
 ALTER TABLe public.spotify ENABLE ROW LEVEL SECURITY;
@@ -92,40 +93,51 @@ ALTER TABLe public.spotify ENABLE ROW LEVEL SECURITY;
 -- 
 
 -- PLAYLIST
-CREATE POLICY "Only users can create playlists" ON public.playlist 
-    FOR INSERT WITH CHECK ((auth.role() = 'authenticated'::text));
+CREATE POLICY "Anyone can create playlists" ON public.playlist
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Anyone can select playlists" ON public.playlist
+    FOR SELECT WITH USING ( true );
 
 CREATE POLICY "Users can only delete their own playlists" ON public.playlist 
     FOR DELETE USING ((auth.uid() = user_id));
 
+CREATE POLICY "Anyone can edit playlists" ON public.playlist
+    FOR UPDATE WITH CHECK (auth.role() = 'authenticated');
+
 -- SESSION
-CREATE POLICY "Only users can claim a session" ON public.session
-    FOR INSERT WITH CHECK ((auth.role() = 'authenticated'::text));
+CREATE POLICY "Anyone can create a session" ON public.session
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- NEW SESSION
-CREATE POLICY "Only users can make a new session" ON public.new_session
-    FOR INSERT WITH CHECK ((auth.role() = 'authenticated'::text));
+CREATE POLICY "Anyone can create a new session" ON public.new_session
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- SONG
-CREATE POLICY "Only users can add songs" ON public.song
-    FOR INSERT WITH CHECK ((auth.role() = 'authenticated'::text));
+CREATE POLICY "Anyone can create a song" ON public.song
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 -- SPOTIFY
-CREATE POLICY "Only users can make a new spotify session" ON public.spotify
-    FOR INSERT WITH CHECK ((auth.role() = 'authenticated'::text));
+CREATE POLICY "Any user can make a new spotify session" ON public.spotify
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 CREATE POLICY "Only users can update their spotify session" ON public.spotify
-    FOR UPDATE USING ((auth.uid() = user_id));
+    FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE POLICY "Only users can select their own spotify sessions" ON public.spotify
-    FOR SELECT USING ((auth.uid() = user_id));
+    FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Only users can delete their own spotify sessions" ON public.spotify
-    FOR DELETE USING ((auth.uid() = user_id));
+    FOR DELETE USING (auth.uid() = user_id);
 
 -- 
 -- PL/pgSQL
 -- 
+
+-- Check if a user exists
+CREATE OR REPLACE FUNCTION user_exists(user_id uuid) RETURNS boolean AS $$
+    SELECT EXISTS(SELECT 1 FROM auth.users WHERE id = user_id);
+$$ LANGUAGE SQL;
 
 -- Increment the play count of a song
 CREATE OR REPLACE FUNCTION increment_play_count(song_id bigint) RETURNS void AS $$
