@@ -51,6 +51,8 @@ CREATE TABLE public.session (
     playlist bigint NOT NULL,
     currently_playing bigint REFERENCES public.song,
 
+    settings jsonb NOT NULL,
+
     PRIMARY KEY(id),
     CONSTRAINT fk_playlist FOREIGN KEY (playlist) REFERENCES public.playlist(id)
 );
@@ -68,6 +70,17 @@ CREATE TABLE public.spotify (
     PRIMARY KEY(id)
 );
 
+CREATE TABLE public.profile (
+    id uuid REFERENCES auth.users NOT NULL,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+
+    username text NOT NULL,
+    
+    profile_picture text,
+
+    PRIMARY KEY(id)
+);
+
 
 -- 
 -- COMMENTS
@@ -77,6 +90,7 @@ COMMENT ON TABLE public.song IS 'Table that holds all song information';
 COMMENT ON TABLE public.session IS 'Table that holds session information';
 COMMENT ON TABLE public.new_session IS 'Table that holds information about session that are not instansiated yet, but do have a session code';
 COMMENT ON TABLE public.spotify IS 'Table that holds information about spotify sessions, this can only be queried by the owner.';
+COMMENT ON TABLE public.profile IS 'Holds all extra information about users';
 
 -- 
 -- ROW LEVEL SECURITY 
@@ -86,7 +100,8 @@ ALTER TABLE public.song ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.new_session ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.playlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.session ENABLE ROW LEVEL SECURITY;
-ALTER TABLe public.spotify ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.spotify ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profile ENABLE ROW LEVEL SECURITY;
 
 -- 
 -- POLICIES
@@ -129,6 +144,16 @@ CREATE POLICY "Only users can select their own spotify sessions" ON public.spoti
 
 CREATE POLICY "Only users can delete their own spotify sessions" ON public.spotify
     FOR DELETE USING (auth.uid() = user_id);
+
+-- PROFILE
+CREATE POLICY "Public profiles are viewable by everyone." ON public.profile
+  FOR SELECT USING ( true );
+
+CREATE POLICY "Users can insert their own profile." ON public.profile
+    FOR INSERT WITH CHECK ( auth.uid() = id );
+
+CREATE POLICY "Users can update own profile." ON public.profile
+  FOR UPDATE USING ( auth.uid() = id );
 
 -- 
 -- PL/pgSQL
