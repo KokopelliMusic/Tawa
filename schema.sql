@@ -183,10 +183,21 @@ CREATE OR REPLACE FUNCTION add_user_to_playlist(playlist_id bigint, uid uuid) RE
     END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION claim_session(session_id character varying, user_id uuid, playlist_id bigint) RETURNS void AS $$ 
+CREATE OR REPLACE FUNCTION claim_session(session_id character varying, user_id uuid, playlist_id bigint, settings jsonb) RETURNS void AS $$ 
+    DECLARE
+        new_ses boolean;
     BEGIN
-        INSERT INTO public.session(id, user_id, playlist)
-        VALUES (session_id, user_id, playlist_id);
+        SELECT EXISTS(
+            SELECT 1 FROM public.new_session
+            WHERE id = session_id)
+        INTO new_ses;
+        
+        IF NOT new_ses THEN
+            RAISE EXCEPTION 'Session does not exist';
+        END IF;
+
+        INSERT INTO public.session(id, user_id, playlist, settings)
+        VALUES (session_id, user_id, playlist_id, settings);
 
         DELETE FROM public.new_session
         WHERE id = session_id;
