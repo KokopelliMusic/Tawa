@@ -112,7 +112,7 @@ CREATE POLICY "Anyone can create playlists" ON public.playlist
     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
 CREATE POLICY "Anyone can select playlists" ON public.playlist
-    FOR SELECT WITH USING ( true );
+    FOR SELECT USING ( true );
 
 CREATE POLICY "Users can only delete their own playlists" ON public.playlist 
     FOR DELETE USING ((auth.uid() = user_id));
@@ -123,6 +123,10 @@ CREATE POLICY "Anyone can edit playlists" ON public.playlist
 -- SESSION
 CREATE POLICY "Anyone can create a session" ON public.session
     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Enable access to all users" ON public.session 
+    FOR SELECT USING (true);
+
 
 -- NEW SESSION
 CREATE POLICY "Anyone can create a new session" ON public.new_session
