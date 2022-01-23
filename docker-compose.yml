@@ -1,12 +1,26 @@
-version: '3'
+version: '3.9'
 services:
-  database:
-    image: postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: pw
-      POSTGRES_DB: db
+  web:
+    build: .
     ports:
-      - "5432:5432"
+      - "8080:8080"
+    container_name: tawa-web
+    profiles: ["web"]
+  web-dev:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-Dev
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_STRING=redis://redis:6379
+    container_name: tawa-web-dev
+    profiles: ["dev"]
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - "./docker/redis:/data"
+    container_name: tawa-redis
+

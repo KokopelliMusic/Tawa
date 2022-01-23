@@ -1,40 +1,26 @@
-dev: install generate
-	npx ts-node-dev --pretty --transpile-only src/server.ts
+dev-server:
+	npx ts-node-dev --respawn --pretty --transpile-only src/index.ts
 
-install:
-	npm install
-
-test: unittest
-
-unittest:
-	npx jest
-
-db:
-	docker-compose up
-
-build:
-	tsc --outDir dist
+dev:
+	docker-compose --profile dev up
 
 start:
-	ts-node src/index.ts
+	npx ts-node src/index.ts
 
-deploy-db:
-	npx prisma migrate deploy --skip-seed
+build-docker-dev:
+	docker build --tag tawa-web-dev --file Dockerfile-Dev . 
 
-migrate:
-	npx prisma migrate dev
+redis:
+	docker-compose up
 
-generate:
-	npx prisma generate
+redis-cli: 
+	docker exec -it tawa-redis redis-cli
 
-lint:
-	npx eslint . --ext .ts --fix 
+db:
+	supabase start
 
-format-prisma:
-	npx prisma format
+stop-supabase:
+	docker stop $(docker ps -aq --filter "name=supabase")
 
-seed:
-	npx prisma db seed
-
-studio:
-	npx prisma studio
+clean-supabase: stop-supabase
+	docker rm $(docker ps -aq --filter "name=supabase") 

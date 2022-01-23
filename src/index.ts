@@ -1,116 +1,91 @@
-import * as dotenv from 'dotenv'
-import express from 'express'
-import cors from 'cors'
-import helmet from 'helmet'
-import morgan from 'morgan'
-import { ApolloServer } from 'apollo-server-express'
-import { typeDefs, resolvers } from './graphql'
-import { ApolloServerPluginDrainHttpServer, AuthenticationError } from 'apollo-server-core'
-import { createServer } from 'http'
-import jwt from 'jsonwebtoken'
-import { getKey } from './middleware/auth.middleware'
-import staticRouter from './controllers/static.router'
-import sessionRouter from './controllers/session.router'
-import { PrismaClient } from '.prisma/client'
+import * as dotenv from "dotenv";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import * as redislib from 'redis';
+import * as supabaselib from '@supabase/supabase-js'
+import { inputRouter } from "./input";
+import { streamRouter } from "./stream";
+import { EventEmitter } from "stream";
+import { GlobalEmit, TawaEmitter } from "./emitter";
+import { pushToList } from "./redis";
 
-// Load environment variables from .env file, where API keys and passwords are configured
+/**
+ * Config
+ */
 dotenv.config()
 
-// Create Express server
-const PORT = parseInt(process.env.PORT as string) || 8080
-export const app = express()
-const httpServer = createServer(app)
-
-//Prisma
-const prisma = new PrismaClient()
-
-// Auth0
-const jwtOptions = {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  audience: process.env.AUTH0_AUDIENCE!,
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  issuer: process.env.AUTH0_DOMAIN!,
-  algorithms: ['RS256']
+if (!process.env.PORT || !process.env.REDIS_STRING || !process.env.SUPABASE_URL || !process.env.SUPABASE_TOKEN || !process.env.DEV) {
+  console.log('Please set PORT, REDIS_STRING, SUPABASE_URL, DEV and SUPABASE_TOKEN in .env')
+  process.exit(1);
 }
+ 
+const DEV: boolean = process.env.DEV === 'true'
+const PORT: number = parseInt(process.env.PORT as string, 10);
+const REDIS_STRING: string = process.env.REDIS_STRING!
+const SUPABASE_URL: string = process.env.SUPABASE_URL!
+const SUPABASE_TOKEN: string = process.env.SUPABASE_TOKEN!
 
-// Apollo server
-const apolloServer = new ApolloServer({
-  typeDefs,
-  resolvers,
-  debug: process.env.DEV === 'true',
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-  context: ({ req }) => {
-    // simple auth check on every request
-    const token = req.headers.authorization
-    if (!token) {
-      throw new AuthenticationError('You must be logged in to access this resource')
-    }
-    const user = new Promise((resolve, reject) => {
-      // @ts-expect-error Rot op joh dit is gewoon goedwerkende js code
-      jwt.verify(token, getKey, jwtOptions, (err, decoded) => {
-        if (err) {
-          reject(err)
-        }
-        resolve(decoded.email)
-      })
-    })
+/**
+ * (Global) variables
+ */
 
-    return {
-      user
-    }
-  },
+const app = express();
+const events = new TawaEmitter()
+const redis = redislib.createClient({ url: REDIS_STRING });
+const supabase = supabaselib.createClient(SUPABASE_URL, SUPABASE_TOKEN)
+
+/**
+ * Middleware
+ */
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+
+app.use(cors());
+app.use(express.json());
+
+app.use((req, _res, next) => {
+  req.events = events
+  req.redis  = redis
+  next()
 })
 
-// Swagger
-
-
 /**
- * Middlewares
+ * Redis
  */
-app.use(cors({
-  origin: '*',
-}))
-app.use(helmet({
-  contentSecurityPolicy: false
-}))
-app.use(morgan(process.env.DEV === 'true' ? 'dev' : 'combined'))
-app.use(express.json())
+redis.on('error', (err) => {
+  console.error(`Redis Error: ${err}`);
+})
 
-/**
- * Bind database to express.request
- */
-app.use((req, _res, next) => {
-  req.db = prisma
-  next()
+events.on('*', (data: GlobalEmit) => {
+  pushToList(redis, data.session, JSON.stringify(data))
+  console.log('GLOBAL DATA: ', data)
+})
+
+supabase.from('session').on('INSERT', async (session: any) => {
+  console.log('Session created: ', session)
+  await pushToList(redis, session.id, JSON.stringify({ session: session.id, data: { type: 'session', data: session } }))
 })
 
 /**
  * Routes
  */
-app.use(process.env.DEFAULT_URL, staticRouter)
-app.use(process.env.DEFAULT_URL + 'session', sessionRouter)
+// Index.html
+app.get('/', (req, res) => res.sendFile('index.html', { root: './public' }));
+// public files
+app.use('/', express.static('public'))
+
+app.use('/input', inputRouter)
+app.use('/stream', streamRouter)
 
 /**
  * Run the server
  */
-export const startServer = async () => {
 
-  await apolloServer.start()
-  apolloServer.applyMiddleware({ app })
-  await new Promise<void>(resolve => httpServer.listen({ port: PORT }, resolve))
-    
-    
-  console.log(`
-    🚀 Server listening on port ${PORT}
-    🌎 Open http://localhost:${PORT} in your browser
-    🌑 Open apollo playground at http://localhost:${PORT}/graphql
-    `)
-
+async function start() {
+  await redis.connect()
+  app.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));
 }
 
-[`SIGINT`, `SIGUSR1`, `SIGUSR2`, `uncaughtException`, `SIGTERM`].forEach((eventType) => {
-  process.on(eventType, () => {
-    console.log('Shutting down because of ' + eventType)
-    prisma.$disconnect()
-  })
-})
+start().catch(console.error)
