@@ -22,3 +22,17 @@ export const getList = async (redis: RedisClientType<any, Record<string, never>>
 export const listExists = async (redis: RedisClientType<any, Record<string, never>>, listname: string): Promise<boolean> => {
   return await redis.EXISTS(listname)
 }
+
+export const setCurrentlyPlaying = async (redis: RedisClientType<any, Record<string, never>>, session: string, song: any) => {
+  await redis.SET(`${session}_currently_playing`, JSON.stringify(song))
+}
+
+export const getCurrentlyPlaying = async (redis: RedisClientType<any, Record<string, never>>, session: string) => {
+  const song = await redis.GET(`${session}_currently_playing`)
+  
+  if (!song) {
+    return {}
+  }
+
+  return JSON.parse(song)
+}
