@@ -8,7 +8,8 @@ import { inputRouter } from "./input";
 import { streamRouter } from "./stream";
 import { EventEmitter } from "stream";
 import { GlobalEmit, TawaEmitter } from "./emitter";
-import { pushToList } from "./redis";
+import { pushToList, setCurrentlyPlaying } from "./redis";
+import { cacheRouter } from "./cache";
 
 /**
  * Config
@@ -61,6 +62,11 @@ redis.on('error', (err) => {
 events.on('*', (data: GlobalEmit) => {
   pushToList(redis, data.session, JSON.stringify(data))
   console.log('GLOBAL DATA: ', data)
+
+  // Intercept the song that is currently playing and yeet it into redis
+  if (data.data.eventType === 'next_song') {
+    setCurrentlyPlaying(redis, data.session, data.data.song)
+  }
 })
 
 supabase.from('session').on('INSERT', async (session: any) => {
@@ -78,6 +84,7 @@ app.use('/', express.static('public'))
 
 app.use('/input', inputRouter)
 app.use('/stream', streamRouter)
+app.use('/cache', cacheRouter)
 
 /**
  * Run the server
