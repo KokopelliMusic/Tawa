@@ -140,8 +140,8 @@ CREATE POLICY "Anyone can create a song" ON public.song
 CREATE POLICY "Any user can make a new spotify session" ON public.spotify
     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Only users can update their spotify session" ON public.spotify
-    FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Anyone can update a spotify session" ON public.spotify
+    FOR UPDATE USING ( true );
 
 CREATE POLICY "Only users can select their own spotify sessions" ON public.spotify
     FOR SELECT USING (auth.uid() = user_id);
@@ -233,3 +233,11 @@ CREATE OR REPLACE FUNCTION random_string(length integer) RETURNS character varyi
         RETURN r;
     END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION update_spotify_token(token character varying, uid uuid, expire_date timestamp with time zone) RETURNS void AS $$
+    BEGIN
+        UPDATE public.spotify
+        SET access_token = token, expires_at = expire_date
+        WHERE user_id = uid;
+    END;
+$$ LANGUAGE plpgsql VOLATILE STRICT SECURITY DEFINER;
