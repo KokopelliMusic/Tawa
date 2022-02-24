@@ -124,6 +124,9 @@ CREATE POLICY "Any user can edit playlists" ON public.playlist
 CREATE POLICY "Anyone can create a session" ON public.session
     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
+CREATE POLICY "Anyone can update a session" ON public.session
+    FOR UPDATE USING (true);
+
 CREATE POLICY "Enable access to everyone" ON public.session 
     FOR SELECT USING (true);
 
@@ -135,6 +138,9 @@ CREATE POLICY "Anyone can create a new session" ON public.new_session
 -- SONG
 CREATE POLICY "Anyone can create a song" ON public.song
     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "People can only delete their own songs" ON public.song
+    FOR DELETE USING ((auth.uid() = added_by));
 
 -- SPOTIFY
 CREATE POLICY "Any user can make a new spotify session" ON public.spotify
@@ -175,7 +181,15 @@ CREATE OR REPLACE FUNCTION increment_play_count(song_id bigint) RETURNS void AS 
         SET play_count = play_count + 1
         WHERE id = song_id;
     END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql VOLATILE STRICT SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION reset_playlist(playlist_id bigint) RETURNS void AS $$
+    BEGIN
+        UPDATE public.song
+        SET play_count = 0
+        WHERE playlist = playlist_id;
+    END;
+$$ LANGUAGE plpgsql VOLATILE STRICT SECURITY DEFINER;
 
 -- Add user to the playlist as someone who has added the song
 CREATE OR REPLACE FUNCTION add_user_to_playlist(playlist_id bigint, uid uuid) RETURNS void AS $$

@@ -28,7 +28,7 @@ streamRouter.get('/session/:session', (req, res) => {
     conns.set(session, 1)
   }
 
-  console.log('Got a new connection for session TEST. Current connections: ' + conns.get(session))
+  console.log(`Got a new connection for session ${session}. Current connections: ${conns.get(session)}`)
 
   req.events.on(session, (data) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`)
@@ -37,7 +37,7 @@ streamRouter.get('/session/:session', (req, res) => {
   // Calls when the client closes the SSE
   res.on('close', () => {
     conns.set(session, conns.get(session)! - 1)
-    console.log('Client dropped connection for session TEST. Current connections: ' + conns.get(session));
+    console.log(`Client dropped connection for session ${session}. Current connections: ${conns.get(session)}`);
     res.end()
   })
 })
