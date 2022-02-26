@@ -1,6 +1,5 @@
 {
   "name": "tawa",
-  "type": "module",
   "version": "1.0.0",
   "description": "The message handler for Kokopelli",
   "scripts": {

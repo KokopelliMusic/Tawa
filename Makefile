@@ -5,7 +5,7 @@ dev:
 	docker-compose --profile dev up
 
 start:
-	npx ts-node src/index.ts
+	npx ts-node --transpile-only src/index.ts
 
 build-docker-dev:
 	docker build --tag tawa-web-dev --file Dockerfile-Dev . 
