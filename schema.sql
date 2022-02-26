@@ -133,7 +133,7 @@ CREATE POLICY "Enable access to everyone" ON public.session
 
 -- NEW SESSION
 CREATE POLICY "Anyone can create a new session" ON public.new_session
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+    FOR INSERT WITH CHECK (true);
 
 -- SONG
 CREATE POLICY "Anyone can create a song" ON public.song
@@ -220,7 +220,7 @@ CREATE OR REPLACE FUNCTION claim_session(session_id character varying, user_id u
         DELETE FROM public.new_session
         WHERE id = session_id;
     END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql VOLATILE STRICT SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION new_session() RETURNS character varying as $$
     DECLARE
