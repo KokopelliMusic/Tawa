@@ -142,6 +142,9 @@ CREATE POLICY "Anyone can create a song" ON public.song
 CREATE POLICY "People can only delete their own songs" ON public.song
     FOR DELETE USING ((auth.uid() = added_by));
 
+CREATE POLICY "Anyone can select a song" ON public.song
+    FOR SELECT USING (true);
+
 -- SPOTIFY
 CREATE POLICY "Any user can make a new spotify session" ON public.spotify
     FOR INSERT WITH CHECK (auth.role() = 'authenticated');
@@ -199,7 +202,7 @@ CREATE OR REPLACE FUNCTION add_user_to_playlist(playlist_id bigint, uid uuid) RE
         WHERE id = playlist_id
         AND uid != ANY(users);
     END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql VOLATILE STRICT SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION claim_session(session_id character varying, user_id uuid, playlist_id bigint, settings jsonb) RETURNS void AS $$ 
     DECLARE
